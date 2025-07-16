@@ -1,11 +1,21 @@
 // Configuration management
 const CONFIG_URL =
-	"https://github.com/akshayr-ts/ts-extension-main/blob/main/plugin-config.json"; // Replace with your config URL
+	"https://raw.githubusercontent.com/akshayr-ts/ts-extension-main/main/plugin-config.json"; // GitHub raw URL
 const CONFIG_CACHE_KEY = "plugin_config";
 const CONFIG_CACHE_DURATION = 1000 * 60 * 30; // 30 minutes
 
 async function loadConfiguration() {
 	try {
+		console.log("Service worker: Loading configuration...");
+
+		// Check if chrome.storage is available
+		if (!chrome.storage || !chrome.storage.local) {
+			console.warn(
+				"Service worker: chrome.storage.local not available, skipping cache"
+			);
+			return await fetchConfigurationDirectly();
+		}
+
 		const cachedConfig = await chrome.storage.local.get([
 			CONFIG_CACHE_KEY,
 			"config_cached_at",
@@ -17,25 +27,44 @@ async function loadConfiguration() {
 			cachedConfig.config_cached_at &&
 			now - cachedConfig.config_cached_at < CONFIG_CACHE_DURATION
 		) {
+			console.log("Service worker: Using cached configuration");
 			return cachedConfig[CONFIG_CACHE_KEY];
 		}
 
+		console.log(
+			"Service worker: Fetching fresh configuration from",
+			CONFIG_URL
+		);
 		const response = await fetch(CONFIG_URL);
-		const config = await response.json();
 
-		await chrome.storage.local.set({
-			[CONFIG_CACHE_KEY]: config,
-			config_cached_at: now,
-		});
+		if (!response.ok) {
+			throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+		}
+
+		const config = await response.json();
+		console.log("Service worker: Successfully fetched config", config);
+
+		// Try to cache, but don't fail if storage isn't available
+		try {
+			await chrome.storage.local.set({
+				[CONFIG_CACHE_KEY]: config,
+				config_cached_at: now,
+			});
+			console.log("Service worker: Configuration cached successfully");
+		} catch (storageError) {
+			console.warn("Service worker: Failed to cache config:", storageError);
+		}
 
 		return config;
 	} catch (error) {
-		console.error("Failed to load configuration:", error);
+		console.error("Service worker: Failed to load configuration:", error);
+		console.log("Service worker: Falling back to default configuration");
 		return getDefaultConfiguration();
 	}
 }
 
 function getDefaultConfiguration() {
+	console.log("Service worker: Using default configuration");
 	return {
 		version: "1.0.0",
 		zoho_config: {
@@ -50,7 +79,92 @@ function getDefaultConfiguration() {
 			job_openings: [],
 			default_selection: null,
 		},
-		pipeline_stages: [],
+		pipeline_stages: [
+			{
+				label: "Applied",
+				short: "APL",
+				value: "Applied",
+				background: "#a54444",
+				badgeClass: "apple-blossom",
+			},
+			{
+				label: "AI Database",
+				short: "AID",
+				value: "AI Database",
+				background: "#a54444",
+				badgeClass: "apple-blossom",
+			},
+			{
+				label: "AI Linkedin",
+				short: "AIL",
+				value: "AI Linkedin",
+				background: "#a54444",
+				badgeClass: "apple-blossom",
+			},
+			{
+				label: "ShortList",
+				short: "SL",
+				value: "ShortList",
+				background: "#d0a72b",
+				badgeClass: "sheen-gold",
+			},
+			{
+				label: "Booked",
+				short: "BKD",
+				value: "Booked",
+				background: "#1a936a",
+				badgeClass: "lightgreen",
+			},
+			{
+				label: "Spoken-to",
+				short: "ST",
+				value: "Spoken-to",
+				background: "#1e3a8a",
+				badgeClass: "darkblue",
+			},
+			{
+				label: "Chase VI",
+				short: "CVI",
+				value: "Chase VI",
+				background: "#1e3a8a",
+				badgeClass: "darkblue",
+			},
+			{
+				label: "Submitted",
+				short: "SBMT",
+				value: "Submitted",
+				background: "#00868c",
+				badgeClass: "darkgreen",
+			},
+			{
+				label: "Hired",
+				short: "HRD",
+				value: "Hired",
+				background: "#1a936a",
+				badgeClass: "lightgreen",
+			},
+			{
+				label: "Rejected",
+				short: "RJD",
+				value: "Rejected",
+				background: "#ed0707",
+				badgeClass: "red",
+			},
+			{
+				label: "Rejected by client",
+				short: "RJC",
+				value: "Rejected by client",
+				background: "#ed0707",
+				badgeClass: "red",
+			},
+			{
+				label: "Archived",
+				short: "ARC",
+				value: "Archived",
+				background: "#6b7280",
+				badgeClass: "cadet",
+			},
+		],
 		auto_applications: {
 			enabled: true,
 			retry_interval: 500,
@@ -61,16 +175,73 @@ function getDefaultConfiguration() {
 }
 
 async function getConfiguration() {
-	const cachedConfig = await chrome.storage.local.get(CONFIG_CACHE_KEY);
-	if (cachedConfig[CONFIG_CACHE_KEY]) {
-		return cachedConfig[CONFIG_CACHE_KEY];
+	console.log("Service worker: getConfiguration called");
+
+	// Check if chrome.storage is available
+	if (!chrome.storage || !chrome.storage.local) {
+		console.warn(
+			"Service worker: chrome.storage.local not available, loading fresh config"
+		);
+		return await loadConfiguration();
 	}
+
+	try {
+		const cachedConfig = await chrome.storage.local.get(CONFIG_CACHE_KEY);
+		if (cachedConfig[CONFIG_CACHE_KEY]) {
+			console.log("Service worker: Returning cached config");
+			return cachedConfig[CONFIG_CACHE_KEY];
+		}
+	} catch (storageError) {
+		console.warn("Service worker: Error accessing storage:", storageError);
+	}
+
+	console.log("Service worker: No cached config, loading fresh");
 	return await loadConfiguration();
 }
 
+// Function to clear configuration cache (useful for debugging)
+async function clearConfigCache() {
+	console.log("Service worker: Clearing config cache");
+
+	// Check if chrome.storage is available
+	if (!chrome.storage || !chrome.storage.local) {
+		console.warn(
+			"Service worker: chrome.storage.local not available, cannot clear cache"
+		);
+		return;
+	}
+
+	try {
+		await chrome.storage.local.remove([CONFIG_CACHE_KEY, "config_cached_at"]);
+		console.log("Service worker: Cache cleared successfully");
+	} catch (error) {
+		console.warn("Service worker: Error clearing cache:", error);
+	}
+}
+
 chrome.runtime.onInstalled.addListener((details) => {
-	loadConfiguration().then(() => {
-		registerDynamicRules();
+	console.log(
+		"Service worker: Extension installed/updated, clearing cache and loading config"
+	);
+	clearConfigCache()
+		.then(() => {
+			return loadConfiguration();
+		})
+		.then(() => {
+			registerDynamicRules();
+		})
+		.catch((error) => {
+			console.error("Service worker: Error during installation setup:", error);
+			// Still try to register rules even if config loading fails
+			registerDynamicRules();
+		});
+});
+
+// New startup listener
+chrome.runtime.onStartup.addListener(() => {
+	console.log("Service worker: Extension startup, loading configuration");
+	loadConfiguration().catch((error) => {
+		console.error("Service worker: Error loading config on startup:", error);
 	});
 });
 
@@ -91,11 +262,28 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
 	// Handle configuration requests
 	if (request.action === "get_config") {
+		console.log("Service worker: Received get_config request");
 		getConfiguration()
 			.then((config) => {
+				console.log("Service worker: Successfully loaded config", config);
 				sendResponse({ success: true, config: config });
 			})
 			.catch((error) => {
+				console.error("Service worker: Error loading config", error);
+				sendResponse({ success: false, error: error.message });
+			});
+		return true; // Keep the message channel open for async response
+	}
+
+	// Handle cache clearing requests
+	if (request.action === "clear_config_cache") {
+		console.log("Service worker: Received clear_config_cache request");
+		clearConfigCache()
+			.then(() => {
+				sendResponse({ success: true });
+			})
+			.catch((error) => {
+				console.error("Service worker: Error clearing cache", error);
 				sendResponse({ success: false, error: error.message });
 			});
 		return true; // Keep the message channel open for async response
@@ -178,4 +366,23 @@ async function registerDynamicRules() {
 	];
 
 	chrome.declarativeNetRequest.updateDynamicRules({ addRules, removeRuleIds });
+}
+
+// Function to fetch configuration directly without caching (fallback)
+async function fetchConfigurationDirectly() {
+	console.log("Service worker: Fetching configuration directly (no cache)");
+	try {
+		const response = await fetch(CONFIG_URL);
+
+		if (!response.ok) {
+			throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+		}
+
+		const config = await response.json();
+		console.log("Service worker: Successfully fetched config directly", config);
+		return config;
+	} catch (error) {
+		console.error("Service worker: Failed to fetch config directly:", error);
+		return getDefaultConfiguration();
+	}
 }

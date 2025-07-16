@@ -106,33 +106,48 @@ const stageColorMap = {
 // Function to load pipeline configuration and populate stageButtons
 async function loadPipelineConfiguration() {
 	try {
+		console.log("Content script: Starting pipeline configuration load...");
+
 		// Check if we're on the pipeline configuration page
 		const pipelineContainer = document.querySelector("#pp-main-div");
 		if (pipelineContainer) {
-			console.log("Loading pipeline configuration from current page...");
+			console.log(
+				"Content script: Loading pipeline configuration from current page..."
+			);
 			populateStageButtonsFromPipeline(pipelineContainer);
 			return;
 		}
 
 		// Try to load stage buttons from centralized configuration first
 		console.log(
-			"Attempting to load pipeline configuration from centralized config..."
+			"Content script: Attempting to load pipeline configuration from centralized config..."
 		);
-		await loadStageButtonsFromConfig();
+		const configLoaded = await loadStageButtonsFromConfig();
 
 		// If no stage buttons loaded from config, use fallback
-		if (stageButtons.length === 0) {
+		if (!configLoaded || stageButtons.length === 0) {
 			console.log(
-				"No pipeline config found, using comprehensive fallback pipeline configuration"
+				"Content script: No pipeline config found or failed to load, using comprehensive fallback pipeline configuration"
 			);
 			stageButtons = [...fallbackStageButtons];
+			console.log(
+				`Content script: Using ${stageButtons.length} fallback stage buttons`
+			);
+		} else {
+			console.log(
+				`Content script: Successfully loaded ${stageButtons.length} stage buttons from config`
+			);
 		}
 
 		// Optional: Try to fetch pipeline configuration in the background (non-blocking)
 		// This can be enabled later when authentication issues are resolved
 		// fetchPipelineConfiguration();
 	} catch (error) {
-		console.error("Error loading pipeline configuration:", error);
+		console.error(
+			"Content script: Error loading pipeline configuration:",
+			error
+		);
+		console.log("Content script: Falling back to hardcoded configuration");
 		stageButtons = [...fallbackStageButtons];
 	}
 }
@@ -404,27 +419,61 @@ async function fetchPipelineConfigurationViaIframe(url) {
 // Function to load stage buttons from centralized configuration
 async function loadStageButtonsFromConfig() {
 	try {
+		console.log(
+			"Content script: Sending get_config request to service worker..."
+		);
 		const response = await chrome.runtime.sendMessage({
 			action: "get_config",
 		});
 
-		if (
-			response.success &&
-			response.config &&
-			response.config.pipeline_stages
-		) {
-			console.log("Loading stage buttons from centralized configuration");
-			stageButtons = [...response.config.pipeline_stages];
+		console.log(
+			"Content script: Received response from service worker:",
+			response
+		);
+
+		if (response && response.success && response.config) {
+			console.log("Content script: Config received successfully");
 			console.log(
-				`Loaded ${stageButtons.length} stage buttons from configuration`
+				"Content script: Config structure:",
+				JSON.stringify(response.config, null, 2)
 			);
-			return true;
+
+			if (
+				response.config.pipeline_stages &&
+				Array.isArray(response.config.pipeline_stages)
+			) {
+				console.log(
+					"Content script: Loading stage buttons from centralized configuration"
+				);
+				console.log(
+					"Content script: Pipeline stages found:",
+					response.config.pipeline_stages
+				);
+				stageButtons = [...response.config.pipeline_stages];
+				console.log(
+					`Content script: Loaded ${stageButtons.length} stage buttons from configuration`
+				);
+				return true;
+			} else {
+				console.log(
+					"Content script: No pipeline_stages array found in configuration"
+				);
+				console.log(
+					"Content script: Available config keys:",
+					Object.keys(response.config)
+				);
+				return false;
+			}
 		} else {
-			console.log("No pipeline stages found in centralized configuration");
+			console.log("Content script: Failed to get valid config response");
+			console.log("Content script: Response details:", response);
 			return false;
 		}
 	} catch (error) {
-		console.error("Error loading stage buttons from configuration:", error);
+		console.error(
+			"Content script: Error loading stage buttons from configuration:",
+			error
+		);
 		return false;
 	}
 }
@@ -1345,3 +1394,21 @@ if (isPipelineConfigurationPage()) {
 		});
 	}
 }
+
+// Helper function to clear config cache (for debugging)
+async function clearConfigCache() {
+	try {
+		console.log("Content script: Requesting cache clear...");
+		const response = await chrome.runtime.sendMessage({
+			action: "clear_config_cache",
+		});
+		console.log("Content script: Cache clear response:", response);
+		return response.success;
+	} catch (error) {
+		console.error("Content script: Error clearing cache:", error);
+		return false;
+	}
+}
+
+// Make clearConfigCache available globally for debugging
+window.clearConfigCache = clearConfigCache;

@@ -54,7 +54,12 @@
 			"run_at": "document_end"
 		}
 	],
-	"permissions": ["webRequest", "declarativeNetRequest", "scripting"],
+	"permissions": [
+		"webRequest",
+		"declarativeNetRequest",
+		"scripting",
+		"storage"
+	],
 	"host_permissions": ["https://recruit.zoho.com/*"],
 	"web_accessible_resources": [
 		{
