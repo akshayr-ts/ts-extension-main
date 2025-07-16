@@ -1,6 +1,6 @@
 // Configuration management
 const CONFIG_URL =
-	"https://raw.githubusercontent.com/your-username/your-repo/main/plugin-config.json"; // Replace with your config URL
+	"https://github.com/akshayr-ts/ts-extension-main/blob/main/plugin-config.json"; // Replace with your config URL
 const CONFIG_CACHE_KEY = "plugin_config";
 const CONFIG_CACHE_DURATION = 1000 * 60 * 30; // 30 minutes
 
