@@ -1,0 +1,158 @@
+{
+	"version": "1.0.0",
+	"last_updated": "2025-07-16T10:00:00Z",
+	"zoho_config": {
+		"base_urls": [
+			"https://recruit.zoho.com",
+			"https://recruit.zoho.eu",
+			"https://recruit.zoho.in",
+			"https://recruit.zoho.au"
+		],
+		"url_patterns": [
+			"https://recruit.zoho.com/recruit/*/ShowDetails.do*",
+			"https://recruit.zoho.com/recruit/*/ShowEntityInfo.do*",
+			"https://recruit.zoho.com/recruit/*/EditCommonModule.do?module=Leads",
+			"https://recruit.zoho.eu/recruit/*/ShowDetails.do*",
+			"https://recruit.zoho.eu/recruit/*/ShowEntityInfo.do*",
+			"https://recruit.zoho.eu/recruit/*/EditCommonModule.do?module=Leads",
+			"https://recruit.zoho.in/recruit/*/ShowDetails.do*",
+			"https://recruit.zoho.in/recruit/*/ShowEntityInfo.do*",
+			"https://recruit.zoho.in/recruit/*/EditCommonModule.do?module=Leads",
+			"https://recruit.zoho.au/recruit/*/ShowDetails.do*",
+			"https://recruit.zoho.au/recruit/*/ShowEntityInfo.do*",
+			"https://recruit.zoho.au/recruit/*/EditCommonModule.do?module=Leads"
+		]
+	},
+	"dropdown_values": {
+		"job_openings": [
+			{
+				"value": "707589000031645325",
+				"text": "Account Director (Research) TEST"
+			},
+			{
+				"value": "707589000031645326",
+				"text": "Senior Developer"
+			},
+			{
+				"value": "707589000031645327",
+				"text": "Marketing Manager"
+			},
+			{
+				"value": "707589000031645328",
+				"text": "Sales Representative"
+			},
+			{
+				"value": "707589000031645329",
+				"text": "Product Manager"
+			}
+		],
+		"default_selection": "707589000031645325"
+	},
+	"pipeline_stages": [
+		{
+			"label": "Applied",
+			"short": "APL",
+			"value": "Applied",
+			"background": "#a54444",
+			"badgeClass": "apple-blossom"
+		},
+		{
+			"label": "AI Database",
+			"short": "AID",
+			"value": "AI Database",
+			"background": "#a54444",
+			"badgeClass": "apple-blossom"
+		},
+		{
+			"label": "AI Linkedin",
+			"short": "AIL",
+			"value": "AI Linkedin",
+			"background": "#a54444",
+			"badgeClass": "apple-blossom"
+		},
+		{
+			"label": "ShortList",
+			"short": "SL",
+			"value": "ShortList",
+			"background": "#d0a72b",
+			"badgeClass": "sheen-gold"
+		},
+		{
+			"label": "Booked",
+			"short": "BKD",
+			"value": "Booked",
+			"background": "#1a936a",
+			"badgeClass": "lightgreen"
+		},
+		{
+			"label": "Spoken-to",
+			"short": "ST",
+			"value": "Spoken-to",
+			"background": "#1e3a8a",
+			"badgeClass": "darkblue"
+		},
+		{
+			"label": "Chase VI",
+			"short": "CVI",
+			"value": "Chase VI",
+			"background": "#1e3a8a",
+			"badgeClass": "darkblue"
+		},
+		{
+			"label": "Submitted",
+			"short": "SBMT",
+			"value": "Submitted",
+			"background": "#00868c",
+			"badgeClass": "darkgreen"
+		},
+		{
+			"label": "Hired",
+			"short": "HRD",
+			"value": "Hired",
+			"background": "#1a936a",
+			"badgeClass": "lightgreen"
+		},
+		{
+			"label": "Rejected",
+			"short": "RJD",
+			"value": "Rejected",
+			"background": "#ed0707",
+			"badgeClass": "red"
+		},
+		{
+			"label": "Rejected by client",
+			"short": "RJC",
+			"value": "Rejected by client",
+			"background": "#ed0707",
+			"badgeClass": "red"
+		},
+		{
+			"label": "Archived",
+			"short": "ARC",
+			"value": "Archived",
+			"background": "#6b7280",
+			"badgeClass": "cadet"
+		}
+	],
+	"auto_applications": {
+		"enabled": true,
+		"retry_interval": 500,
+		"max_wait_time": 10000,
+		"debug": false,
+		"selectors": {
+			"applications_link": [
+				"a[href*=\"Applications\"]",
+				"a[href*=\"submodule=Applications\"]",
+				"a[href*=\"Candidates\"][href*=\"Applications\"]",
+				".quick-access a[title*=\"Applications\"]",
+				".relatedList a:contains(\"Applications\")",
+				".sidebar a:contains(\"Applications\")"
+			]
+		}
+	},
+	"ui_settings": {
+		"theme": "modern",
+		"show_notifications": true,
+		"auto_refresh_interval": 1800000
+	}
+}

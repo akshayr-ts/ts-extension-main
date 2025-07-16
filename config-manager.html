@@ -1,0 +1,652 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Chrome Extension Configuration Manager</title>
+		<style>
+			body {
+				font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+					sans-serif;
+				max-width: 1200px;
+				margin: 0 auto;
+				padding: 20px;
+				line-height: 1.6;
+				background: #f5f5f5;
+			}
+
+			.container {
+				background: white;
+				border-radius: 8px;
+				padding: 30px;
+				box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+			}
+
+			h1 {
+				color: #333;
+				text-align: center;
+				margin-bottom: 30px;
+			}
+
+			.section {
+				margin-bottom: 30px;
+				padding: 20px;
+				border: 1px solid #e0e0e0;
+				border-radius: 6px;
+			}
+
+			.section h2 {
+				margin-top: 0;
+				color: #555;
+				border-bottom: 2px solid #007cba;
+				padding-bottom: 10px;
+			}
+
+			.form-group {
+				margin-bottom: 15px;
+			}
+
+			label {
+				display: block;
+				margin-bottom: 5px;
+				font-weight: 500;
+				color: #333;
+			}
+
+			input,
+			textarea,
+			select {
+				width: 100%;
+				padding: 10px;
+				border: 1px solid #ddd;
+				border-radius: 4px;
+				font-size: 14px;
+				box-sizing: border-box;
+			}
+
+			textarea {
+				height: 120px;
+				resize: vertical;
+			}
+
+			.job-entry {
+				display: flex;
+				gap: 10px;
+				margin-bottom: 10px;
+				align-items: center;
+			}
+
+			.job-entry input {
+				flex: 1;
+			}
+
+			.job-entry button {
+				background: #dc3545;
+				color: white;
+				border: none;
+				padding: 10px 15px;
+				border-radius: 4px;
+				cursor: pointer;
+			}
+
+			.job-entry button:hover {
+				background: #c82333;
+			}
+
+			.pipeline-entry {
+				display: flex;
+				gap: 8px;
+				margin-bottom: 10px;
+				align-items: center;
+			}
+
+			.pipeline-entry input[type="text"] {
+				flex: 1;
+				min-width: 120px;
+			}
+
+			.pipeline-entry input[type="color"] {
+				width: 50px;
+				height: 38px;
+				border: 1px solid #ddd;
+				border-radius: 4px;
+				padding: 0;
+				cursor: pointer;
+			}
+
+			.pipeline-entry button {
+				background: #dc3545;
+				color: white;
+				border: none;
+				padding: 10px 15px;
+				border-radius: 4px;
+				cursor: pointer;
+			}
+
+			.pipeline-entry button:hover {
+				background: #c82333;
+			}
+
+			.btn {
+				background: #007cba;
+				color: white;
+				border: none;
+				padding: 12px 24px;
+				border-radius: 4px;
+				cursor: pointer;
+				font-size: 14px;
+				margin-right: 10px;
+				margin-bottom: 10px;
+			}
+
+			.btn:hover {
+				background: #0056b3;
+			}
+
+			.btn-success {
+				background: #28a745;
+			}
+
+			.btn-success:hover {
+				background: #218838;
+			}
+
+			.url-list {
+				max-height: 200px;
+				overflow-y: auto;
+				border: 1px solid #ddd;
+				padding: 10px;
+				background: #f8f9fa;
+			}
+
+			.url-item {
+				padding: 5px;
+				border-bottom: 1px solid #eee;
+				display: flex;
+				justify-content: space-between;
+				align-items: center;
+			}
+
+			.url-item:last-child {
+				border-bottom: none;
+			}
+
+			.status {
+				padding: 10px;
+				margin: 10px 0;
+				border-radius: 4px;
+				display: none;
+			}
+
+			.status.success {
+				background: #d4edda;
+				border: 1px solid #c3e6cb;
+				color: #155724;
+			}
+
+			.status.error {
+				background: #f8d7da;
+				border: 1px solid #f5c6cb;
+				color: #721c24;
+			}
+
+			.config-preview {
+				background: #f8f9fa;
+				border: 1px solid #e9ecef;
+				border-radius: 4px;
+				padding: 15px;
+				font-family: "Courier New", monospace;
+				font-size: 12px;
+				white-space: pre-wrap;
+				max-height: 400px;
+				overflow-y: auto;
+			}
+
+			.info-box {
+				background: #e3f2fd;
+				border: 1px solid #bbdefb;
+				border-radius: 4px;
+				padding: 15px;
+				margin-bottom: 20px;
+			}
+
+			.info-box h3 {
+				margin-top: 0;
+				color: #1976d2;
+			}
+		</style>
+	</head>
+	<body>
+		<div class="container">
+			<h1>🔧 Chrome Extension Configuration Manager</h1>
+
+			<div class="info-box">
+				<h3>📋 Setup Instructions</h3>
+				<ol>
+					<li>Configure your settings below</li>
+					<li>Click "Generate Configuration" to create the JSON</li>
+					<li>
+						Copy the JSON and host it on a public URL (GitHub, n8n webhook,
+						etc.)
+					</li>
+					<li>Update the CONFIG_URL in your service worker</li>
+					<li>
+						Your extension will automatically fetch updates every 30 minutes!
+					</li>
+				</ol>
+			</div>
+
+			<div class="section">
+				<h2>🌐 Zoho Configuration</h2>
+
+				<div class="form-group">
+					<label>Base URLs (one per line):</label>
+					<textarea
+						id="baseUrls"
+						placeholder="https://recruit.zoho.com&#10;https://recruit.zoho.eu&#10;https://recruit.zoho.in"
+					>
+https://recruit.zoho.com
+https://recruit.zoho.eu
+https://recruit.zoho.in
+https://recruit.zoho.au</textarea
+					>
+				</div>
+			</div>
+
+			<div class="section">
+				<h2>📋 Job Dropdown Values</h2>
+
+				<div id="jobEntries">
+					<!-- Job entries will be added here -->
+				</div>
+
+				<button type="button" class="btn" onclick="addJobEntry()">
+					➕ Add Job
+				</button>
+
+				<div class="form-group">
+					<label>Default Selection (Job ID):</label>
+					<input
+						type="text"
+						id="defaultSelection"
+						placeholder="707589000031645325"
+					/>
+				</div>
+			</div>
+
+			<div class="section">
+				<h2>📊 Pipeline Stages (Hiring Statuses)</h2>
+
+				<div id="pipelineEntries">
+					<!-- Pipeline entries will be added here -->
+				</div>
+
+				<button type="button" class="btn" onclick="addPipelineEntry()">
+					➕ Add Pipeline Stage
+				</button>
+			</div>
+
+			<div class="section">
+				<h2>⚡ Auto-Applications Settings</h2>
+
+				<div class="form-group">
+					<label>
+						<input type="checkbox" id="autoAppEnabled" checked /> Enable
+						Auto-Applications
+					</label>
+				</div>
+
+				<div class="form-group">
+					<label>Retry Interval (milliseconds):</label>
+					<input
+						type="number"
+						id="retryInterval"
+						value="500"
+						min="100"
+						max="5000"
+					/>
+				</div>
+
+				<div class="form-group">
+					<label>Max Wait Time (milliseconds):</label>
+					<input
+						type="number"
+						id="maxWaitTime"
+						value="10000"
+						min="5000"
+						max="60000"
+					/>
+				</div>
+
+				<div class="form-group">
+					<label>
+						<input type="checkbox" id="debugMode" /> Enable Debug Mode
+					</label>
+				</div>
+			</div>
+
+			<div class="section">
+				<h2>🎨 UI Settings</h2>
+
+				<div class="form-group">
+					<label>Theme:</label>
+					<select id="theme">
+						<option value="modern">Modern</option>
+						<option value="classic">Classic</option>
+						<option value="dark">Dark</option>
+					</select>
+				</div>
+
+				<div class="form-group">
+					<label>
+						<input type="checkbox" id="showNotifications" checked /> Show
+						Notifications
+					</label>
+				</div>
+
+				<div class="form-group">
+					<label>Auto Refresh Interval (milliseconds):</label>
+					<input
+						type="number"
+						id="autoRefreshInterval"
+						value="1800000"
+						min="300000"
+						max="3600000"
+					/>
+				</div>
+			</div>
+
+			<div class="section">
+				<h2>📄 Generated Configuration</h2>
+
+				<button
+					type="button"
+					class="btn btn-success"
+					onclick="generateConfig()"
+				>
+					🔄 Generate Configuration
+				</button>
+				<button type="button" class="btn" onclick="copyConfig()">
+					📋 Copy to Clipboard
+				</button>
+				<button type="button" class="btn" onclick="downloadConfig()">
+					💾 Download JSON
+				</button>
+
+				<div class="status" id="status"></div>
+
+				<div class="config-preview" id="configPreview">
+					Click "Generate Configuration" to see the JSON output...
+				</div>
+			</div>
+		</div>
+
+		<script>
+			let jobEntryCount = 0;
+
+			// Initialize with some default job entries
+			window.onload = function () {
+				addJobEntry("707589000031645325", "Account Director (Research) TEST");
+				addJobEntry("707589000031645326", "Senior Developer");
+				addJobEntry("707589000031645327", "Marketing Manager");
+				document.getElementById("defaultSelection").value =
+					"707589000031645325";
+
+				// Initialize with default pipeline stages
+				addPipelineEntry(
+					"Applied",
+					"APL",
+					"Applied",
+					"#a54444",
+					"apple-blossom"
+				);
+				addPipelineEntry(
+					"AI Database",
+					"AID",
+					"AI Database",
+					"#a54444",
+					"apple-blossom"
+				);
+				addPipelineEntry(
+					"AI Linkedin",
+					"AIL",
+					"AI Linkedin",
+					"#a54444",
+					"apple-blossom"
+				);
+				addPipelineEntry(
+					"ShortList",
+					"SL",
+					"ShortList",
+					"#d0a72b",
+					"sheen-gold"
+				);
+				addPipelineEntry("Booked", "BKD", "Booked", "#1a936a", "lightgreen");
+				addPipelineEntry("Spoken-to", "ST", "Spoken-to", "#1e3a8a", "darkblue");
+				addPipelineEntry("Chase VI", "CVI", "Chase VI", "#1e3a8a", "darkblue");
+				addPipelineEntry(
+					"Submitted",
+					"SBMT",
+					"Submitted",
+					"#00868c",
+					"darkgreen"
+				);
+				addPipelineEntry("Hired", "HRD", "Hired", "#1a936a", "lightgreen");
+				addPipelineEntry("Rejected", "RJD", "Rejected", "#ed0707", "red");
+				addPipelineEntry(
+					"Rejected by client",
+					"RJC",
+					"Rejected by client",
+					"#ed0707",
+					"red"
+				);
+				addPipelineEntry("Archived", "ARC", "Archived", "#6b7280", "cadet");
+			};
+
+			function addJobEntry(value = "", text = "") {
+				const container = document.getElementById("jobEntries");
+				const entryDiv = document.createElement("div");
+				entryDiv.className = "job-entry";
+				entryDiv.innerHTML = `
+                <input type="text" placeholder="Job ID (e.g., 707589000031645325)" value="${value}">
+                <input type="text" placeholder="Job Title" value="${text}">
+                <button type="button" onclick="removeJobEntry(this)">🗑️ Remove</button>
+            `;
+				container.appendChild(entryDiv);
+				jobEntryCount++;
+			}
+
+			function removeJobEntry(button) {
+				button.parentElement.remove();
+			}
+
+			function addPipelineEntry(
+				label = "",
+				short = "",
+				value = "",
+				background = "#6b7280",
+				badgeClass = ""
+			) {
+				const container = document.getElementById("pipelineEntries");
+				const entryDiv = document.createElement("div");
+				entryDiv.className = "pipeline-entry";
+				entryDiv.innerHTML = `
+                <input type="text" placeholder="Label (e.g., Applied)" value="${label}" title="Display name">
+                <input type="text" placeholder="Short (e.g., APL)" value="${short}" title="Abbreviation" style="max-width: 60px;">
+                <input type="text" placeholder="Value (e.g., Applied)" value="${value}" title="Technical value">
+                <input type="color" value="${background}" title="Background color">
+                <input type="text" placeholder="Badge Class (e.g., apple-blossom)" value="${badgeClass}" title="CSS class">
+                <button type="button" onclick="removePipelineEntry(this)">🗑️ Remove</button>
+            `;
+				container.appendChild(entryDiv);
+			}
+
+			function removePipelineEntry(button) {
+				button.parentElement.remove();
+			}
+
+			function generateConfig() {
+				try {
+					// Collect base URLs
+					const baseUrls = document
+						.getElementById("baseUrls")
+						.value.split("\n")
+						.map((url) => url.trim())
+						.filter((url) => url.length > 0);
+
+					// Generate URL patterns from base URLs
+					const urlPatterns = [];
+					baseUrls.forEach((baseUrl) => {
+						const patterns = [
+							`${baseUrl}/recruit/*/ShowDetails.do*`,
+							`${baseUrl}/recruit/*/ShowEntityInfo.do*`,
+							`${baseUrl}/recruit/*/EditCommonModule.do?module=Leads`,
+						];
+						urlPatterns.push(...patterns);
+					});
+
+					// Collect job entries
+					const jobEntries = [];
+					const jobDivs = document.querySelectorAll(".job-entry");
+					jobDivs.forEach((div) => {
+						const inputs = div.querySelectorAll('input[type="text"]');
+						const value = inputs[0].value.trim();
+						const text = inputs[1].value.trim();
+						if (value && text) {
+							jobEntries.push({ value, text });
+						}
+					});
+
+					// Collect pipeline entries
+					const pipelineEntries = [];
+					const pipelineDivs = document.querySelectorAll(".pipeline-entry");
+					pipelineDivs.forEach((div) => {
+						const textInputs = div.querySelectorAll('input[type="text"]');
+						const colorInput = div.querySelector('input[type="color"]');
+						const label = textInputs[0].value.trim();
+						const short = textInputs[1].value.trim();
+						const value = textInputs[2].value.trim();
+						const background = colorInput.value;
+						const badgeClass = textInputs[3].value.trim();
+						if (label && short && value && background && badgeClass) {
+							pipelineEntries.push({
+								label,
+								short,
+								value,
+								background,
+								badgeClass,
+							});
+						}
+					});
+
+					// Build configuration object
+					const config = {
+						version: "1.0.0",
+						last_updated: new Date().toISOString(),
+						zoho_config: {
+							base_urls: baseUrls,
+							url_patterns: urlPatterns,
+						},
+						dropdown_values: {
+							job_openings: jobEntries,
+							default_selection: document
+								.getElementById("defaultSelection")
+								.value.trim(),
+						},
+						pipeline_stages: pipelineEntries,
+						auto_applications: {
+							enabled: document.getElementById("autoAppEnabled").checked,
+							retry_interval: parseInt(
+								document.getElementById("retryInterval").value
+							),
+							max_wait_time: parseInt(
+								document.getElementById("maxWaitTime").value
+							),
+							debug: document.getElementById("debugMode").checked,
+							selectors: {
+								applications_link: [
+									'a[href*="Applications"]',
+									'a[href*="submodule=Applications"]',
+									'a[href*="Candidates"][href*="Applications"]',
+									'.quick-access a[title*="Applications"]',
+									'.relatedList a:contains("Applications")',
+									'.sidebar a:contains("Applications")',
+								],
+							},
+						},
+						ui_settings: {
+							theme: document.getElementById("theme").value,
+							show_notifications:
+								document.getElementById("showNotifications").checked,
+							auto_refresh_interval: parseInt(
+								document.getElementById("autoRefreshInterval").value
+							),
+						},
+					};
+
+					// Display formatted JSON
+					const jsonString = JSON.stringify(config, null, 2);
+					document.getElementById("configPreview").textContent = jsonString;
+
+					// Store for copying/downloading
+					window.currentConfig = jsonString;
+
+					showStatus("Configuration generated successfully!", "success");
+				} catch (error) {
+					showStatus(
+						"Error generating configuration: " + error.message,
+						"error"
+					);
+				}
+			}
+
+			function copyConfig() {
+				if (!window.currentConfig) {
+					showStatus("Please generate configuration first!", "error");
+					return;
+				}
+
+				navigator.clipboard
+					.writeText(window.currentConfig)
+					.then(() => {
+						showStatus("Configuration copied to clipboard!", "success");
+					})
+					.catch((err) => {
+						showStatus("Failed to copy: " + err.message, "error");
+					});
+			}
+
+			function downloadConfig() {
+				if (!window.currentConfig) {
+					showStatus("Please generate configuration first!", "error");
+					return;
+				}
+
+				const blob = new Blob([window.currentConfig], {
+					type: "application/json",
+				});
+				const url = URL.createObjectURL(blob);
+				const a = document.createElement("a");
+				a.href = url;
+				a.download = "plugin-config.json";
+				document.body.appendChild(a);
+				a.click();
+				document.body.removeChild(a);
+				URL.revokeObjectURL(url);
+
+				showStatus("Configuration downloaded!", "success");
+			}
+
+			function showStatus(message, type) {
+				const statusDiv = document.getElementById("status");
+				statusDiv.textContent = message;
+				statusDiv.className = `status ${type}`;
+				statusDiv.style.display = "block";
+
+				setTimeout(() => {
+					statusDiv.style.display = "none";
+				}, 3000);
+			}
+		</script>
+	</body>
+</html>

@@ -1,0 +1,65 @@
+{
+	"name": "Zoho Candidate Shortcut",
+	"description": "Effortlessly access and manage Zoho Recruit candidate profiles directly from your browser. This extension provides integrated view links and allows you to dynamically update a candidate's status, streamlining your entire recruitment workflow.\n\nWHAT'S NEW IN VERSION 1.5.0:\n\n🚀 Stabler and Faster Performance:\n* Clean Console Output: No more error messages from failed fetch attempts.\n* Fast Loading: Instantaneous performance with no delays from network requests.\n\n✅ Comprehensive & Dynamic Status Management:\n* The extension now fetches your complete pipeline configuration directly from your Zoho Recruit setup.\n* The dropdown menu dynamically builds with all your current statuses, including: Applied, AI Database, AI Linkedin, ShortList, Booked, Spoken-to, Chase VI, Submitted, Hired, Rejected, Rejected by client, and Archived.\n* Each status is displayed with the correct background color, matching your pipeline themes for easy identification.\n\n🔧 Technical Improvements:\n* The primary source for statuses is now the comprehensive configuration, ensuring all options are always available.\n* Robust fallback to static options if the live fetch ever fails.\n* Optimized z-index and styling for perfect visibility on all pages.\n* Dynamic loading capability is retained for seamless updates when you are on the pipeline page.",
+	"version": "5.5.0",
+	"manifest_version": 3,
+	"author": {
+		"name": "Talent-Shore Team [Frank T. Akshay R]",
+		"url": "https://www.talent-shore.com/"
+	},
+	"background": {
+		"service_worker": "js/sw.js"
+	},
+	"icons": {
+		"16": "icons/16.png",
+		"24": "icons/24.png",
+		"32": "icons/32.png",
+		"48": "icons/48.png",
+		"64": "icons/64.png",
+		"128": "icons/128.png"
+	},
+	"content_scripts": [
+		{
+			"matches": [
+				"https://recruit.zoho.com/recruit/*/EntityInfo.do?module=Candidates&id=*",
+				"https://recruit.zoho.com/recruit/*/ShowTab.do?module=Candidates&submodule=Applications"
+			],
+			"css": ["css/toastr.css"],
+			"js": ["js/jquery-3.6.1.min.js", "js/toastr.min.js", "js/content.js"],
+			"run_at": "document_start"
+		},
+		{
+			"matches": ["https://recruit.zoho.com/*"],
+			"css": ["css/toastr.css"],
+			"js": ["js/jquery-3.6.1.min.js", "js/toastr.min.js", "js/content.js"],
+			"run_at": "document_start"
+		},
+		{
+			"matches": [
+				"https://recruit.zoho.com/recruit/*/EditEntity.do?module=Candidates&id=*"
+			],
+			"css": ["css/toastr.css"],
+			"js": ["js/jquery-3.6.1.min.js", "js/toastr.min.js", "js/frame.js"],
+			"run_at": "document_start",
+			"all_frames": true
+		},
+		{
+			"matches": [
+				"https://recruit.zoho.com/recruit/*/EntityInfo.do?module=JobOpenings&id=*&autoClick=applications",
+				"https://recruit.zoho.com/recruit/*/ShowTab.do?isSearch=false&module=Candidates&cvid=*&filters=*&jobId=*&submodule=Applications",
+				"https://recruit.zoho.com/recruit/*/EntityInfo.do?module=JobOpenings&id=*&submodule=JobOpenings&autoClick=applications",
+				"https://recruit.zoho.com/recruit/*/ShowTab.do?module=Candidates&filters=*searchModule%22%3A%22Potentials%22%2C%22condition%22%3A%220%22%2C%22value%*&jobId=*&submodule=Applications&tab=Applications&view=list&reload=true&refresh=1752068641257&forceLoad=true"
+			],
+			"js": ["js/zoho-auto-applications.js"],
+			"run_at": "document_end"
+		}
+	],
+	"permissions": ["webRequest", "declarativeNetRequest", "scripting"],
+	"host_permissions": ["https://recruit.zoho.com/*"],
+	"web_accessible_resources": [
+		{
+			"matches": ["https://recruit.zoho.com/*"],
+			"resources": ["icons/visible.png"]
+		}
+	]
+}
