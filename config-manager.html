@@ -237,6 +237,22 @@
 			</div>
 
 			<div class="section">
+				<h2>🔐 Allowed Organizations</h2>
+				<p>
+					Add organization IDs that are allowed to use this extension.
+					Organization IDs can be found in Zoho URLs (e.g., org801559407).
+				</p>
+
+				<div id="organizationEntries">
+					<!-- Organization entries will be added here -->
+				</div>
+
+				<button type="button" class="btn" onclick="addOrganizationEntry()">
+					➕ Add Organization
+				</button>
+			</div>
+
+			<div class="section">
 				<h2>🌐 Zoho Configuration</h2>
 
 				<div class="form-group">
@@ -386,6 +402,9 @@ https://recruit.zoho.au</textarea
 
 			// Initialize with some default job entries
 			window.onload = function () {
+				// Initialize with default organization
+				addOrganizationEntry("org801559407");
+
 				addJobEntry("707589000031645325", "Account Director (Research) TEST");
 				addJobEntry("707589000031645326", "Senior Developer");
 				addJobEntry("707589000031645327", "Marketing Manager");
@@ -485,8 +504,36 @@ https://recruit.zoho.au</textarea
 				button.parentElement.remove();
 			}
 
+			function addOrganizationEntry(orgId = "") {
+				const container = document.getElementById("organizationEntries");
+				const entryDiv = document.createElement("div");
+				entryDiv.className = "job-entry"; // Reuse the same styling
+				entryDiv.innerHTML = `
+                <input type="text" placeholder="Organization ID (e.g., org801559407)" value="${orgId}">
+                <button type="button" onclick="removeOrganizationEntry(this)">🗑️ Remove</button>
+            `;
+				container.appendChild(entryDiv);
+			}
+
+			function removeOrganizationEntry(button) {
+				button.parentElement.remove();
+			}
+
 			function generateConfig() {
 				try {
+					// Collect organization IDs
+					const organizationEntries = [];
+					const orgDivs = document.querySelectorAll(
+						"#organizationEntries .job-entry"
+					);
+					orgDivs.forEach((div) => {
+						const input = div.querySelector('input[type="text"]');
+						const orgId = input.value.trim();
+						if (orgId) {
+							organizationEntries.push(orgId);
+						}
+					});
+
 					// Collect base URLs
 					const baseUrls = document
 						.getElementById("baseUrls")
@@ -507,7 +554,7 @@ https://recruit.zoho.au</textarea
 
 					// Collect job entries
 					const jobEntries = [];
-					const jobDivs = document.querySelectorAll(".job-entry");
+					const jobDivs = document.querySelectorAll("#jobEntries .job-entry");
 					jobDivs.forEach((div) => {
 						const inputs = div.querySelectorAll('input[type="text"]');
 						const value = inputs[0].value.trim();
@@ -543,6 +590,7 @@ https://recruit.zoho.au</textarea
 					const config = {
 						version: "1.0.0",
 						last_updated: new Date().toISOString(),
+						allowed_organizations: organizationEntries,
 						zoho_config: {
 							base_urls: baseUrls,
 							url_patterns: urlPatterns,
@@ -582,6 +630,7 @@ https://recruit.zoho.au</textarea
 								document.getElementById("autoRefreshInterval").value
 							),
 						},
+						allowed_organizations: organizationEntries,
 					};
 
 					// Display formatted JSON

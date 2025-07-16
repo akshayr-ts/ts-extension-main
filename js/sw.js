@@ -67,6 +67,7 @@ function getDefaultConfiguration() {
 	console.log("Service worker: Using default configuration");
 	return {
 		version: "1.0.0",
+		allowed_organizations: ["org801559407"],
 		zoho_config: {
 			base_urls: ["https://recruit.zoho.com"],
 			url_patterns: [
@@ -79,92 +80,7 @@ function getDefaultConfiguration() {
 			job_openings: [],
 			default_selection: null,
 		},
-		pipeline_stages: [
-			{
-				label: "Applied",
-				short: "APL",
-				value: "Applied",
-				background: "#a54444",
-				badgeClass: "apple-blossom",
-			},
-			{
-				label: "AI Database",
-				short: "AID",
-				value: "AI Database",
-				background: "#a54444",
-				badgeClass: "apple-blossom",
-			},
-			{
-				label: "AI Linkedin",
-				short: "AIL",
-				value: "AI Linkedin",
-				background: "#a54444",
-				badgeClass: "apple-blossom",
-			},
-			{
-				label: "ShortList",
-				short: "SL",
-				value: "ShortList",
-				background: "#d0a72b",
-				badgeClass: "sheen-gold",
-			},
-			{
-				label: "Booked",
-				short: "BKD",
-				value: "Booked",
-				background: "#1a936a",
-				badgeClass: "lightgreen",
-			},
-			{
-				label: "Spoken-to",
-				short: "ST",
-				value: "Spoken-to",
-				background: "#1e3a8a",
-				badgeClass: "darkblue",
-			},
-			{
-				label: "Chase VI",
-				short: "CVI",
-				value: "Chase VI",
-				background: "#1e3a8a",
-				badgeClass: "darkblue",
-			},
-			{
-				label: "Submitted",
-				short: "SBMT",
-				value: "Submitted",
-				background: "#00868c",
-				badgeClass: "darkgreen",
-			},
-			{
-				label: "Hired",
-				short: "HRD",
-				value: "Hired",
-				background: "#1a936a",
-				badgeClass: "lightgreen",
-			},
-			{
-				label: "Rejected",
-				short: "RJD",
-				value: "Rejected",
-				background: "#ed0707",
-				badgeClass: "red",
-			},
-			{
-				label: "Rejected by client",
-				short: "RJC",
-				value: "Rejected by client",
-				background: "#ed0707",
-				badgeClass: "red",
-			},
-			{
-				label: "Archived",
-				short: "ARC",
-				value: "Archived",
-				background: "#6b7280",
-				badgeClass: "cadet",
-			},
-		],
+		pipeline_stages: [],
 		auto_applications: {
 			enabled: true,
 			retry_interval: 500,
@@ -289,6 +205,23 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 		return true; // Keep the message channel open for async response
 	}
 
+	// Handle organization validation requests
+	if (request.action === "validate_organization") {
+		console.log(
+			"Service worker: Received validate_organization request for",
+			request.orgId
+		);
+		validateOrganization(request.orgId)
+			.then((allowed) => {
+				sendResponse({ success: true, allowed: allowed });
+			})
+			.catch((error) => {
+				console.error("Service worker: Error validating organization", error);
+				sendResponse({ success: false, error: error.message });
+			});
+		return true; // Keep the message channel open for async response
+	}
+
 	// Handle dropdown values request
 	if (request.action === "get_dropdown_values") {
 		getConfiguration()
@@ -384,5 +317,30 @@ async function fetchConfigurationDirectly() {
 	} catch (error) {
 		console.error("Service worker: Failed to fetch config directly:", error);
 		return getDefaultConfiguration();
+	}
+}
+
+// Function to validate organization access
+async function validateOrganization(orgId) {
+	try {
+		console.log(`Service worker: Validating organization ${orgId}`);
+		const config = await getConfiguration();
+
+		if (
+			config.allowed_organizations &&
+			Array.isArray(config.allowed_organizations)
+		) {
+			const isAllowed = config.allowed_organizations.includes(orgId);
+			console.log(
+				`Service worker: Organization ${orgId} allowed: ${isAllowed}`
+			);
+			return isAllowed;
+		}
+
+		console.warn("Service worker: No allowed_organizations found in config");
+		return false;
+	} catch (error) {
+		console.error("Service worker: Error validating organization:", error);
+		return false;
 	}
 }

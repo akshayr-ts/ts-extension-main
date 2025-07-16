@@ -1,94 +1,44 @@
 // Dynamic stage buttons - will be populated from pipeline configuration
 let stageButtons = [];
 
-// Primary pipeline configuration - matches your actual Zoho Recruit pipeline
-// This is comprehensive and includes all statuses from your pipeline setup
-const fallbackStageButtons = [
-	{
-		label: "Applied",
-		short: "APL",
-		value: "Applied",
-		background: "#a54444",
-		badgeClass: "apple-blossom",
-	},
-	{
-		label: "AI Database",
-		short: "AID",
-		value: "AI Database",
-		background: "#a54444",
-		badgeClass: "apple-blossom",
-	},
-	{
-		label: "AI Linkedin",
-		short: "AIL",
-		value: "AI Linkedin",
-		background: "#a54444",
-		badgeClass: "apple-blossom",
-	},
-	{
-		label: "ShortList",
-		short: "SL",
-		value: "ShortList",
-		background: "#d0a72b",
-		badgeClass: "sheen-gold",
-	},
-	{
-		label: "Booked",
-		short: "BKD",
-		value: "Booked",
-		background: "#1a936a",
-		badgeClass: "lightgreen",
-	},
-	{
-		label: "Spoken-to",
-		short: "ST",
-		value: "Spoken-to",
-		background: "#1e3a8a",
-		badgeClass: "darkblue",
-	},
-	{
-		label: "Chase VI",
-		short: "CVI",
-		value: "Chase VI",
-		background: "#1e3a8a",
-		badgeClass: "darkblue",
-	},
-	{
-		label: "Submitted",
-		short: "SBMT",
-		value: "Submitted",
-		background: "#00868c",
-		badgeClass: "darkgreen",
-	},
-	{
-		label: "Hired",
-		short: "HRD",
-		value: "Hired",
-		background: "#1a936a",
-		badgeClass: "lightgreen",
-	},
-	{
-		label: "Rejected",
-		short: "RJD",
-		value: "Rejected",
-		background: "#ed0707",
-		badgeClass: "red",
-	},
-	{
-		label: "Rejected by client",
-		short: "RJC",
-		value: "Rejected by client",
-		background: "#ed0707",
-		badgeClass: "red",
-	},
-	{
-		label: "Archived",
-		short: "ARC",
-		value: "Archived",
-		background: "#6b7280",
-		badgeClass: "cadet",
-	},
-];
+// Function to extract organization ID from URL
+function getOrganizationId() {
+	const match = location.pathname.match(/\/org(\d+)\//);
+	return match ? `org${match[1]}` : null;
+}
+
+// Function to validate if current organization is allowed
+async function validateOrganization() {
+	try {
+		const orgId = getOrganizationId();
+		if (!orgId) {
+			console.warn(
+				"Content script: Could not extract organization ID from URL"
+			);
+			return false;
+		}
+
+		console.log(`Content script: Current organization ID: ${orgId}`);
+
+		const response = await chrome.runtime.sendMessage({
+			action: "validate_organization",
+			orgId: orgId,
+		});
+
+		if (response && response.success && response.allowed) {
+			console.log(`Content script: Organization ${orgId} is authorized`);
+			return true;
+		} else {
+			console.warn(
+				`Content script: Organization ${orgId} is not authorized for this extension`
+			);
+			return false;
+		}
+	} catch (error) {
+		console.error("Content script: Error validating organization:", error);
+		return false;
+	}
+}
 
 // Color mapping for stage themes
 const stageColorMap = {
@@ -108,6 +58,15 @@ async function loadPipelineConfiguration() {
 	try {
 		console.log("Content script: Starting pipeline configuration load...");
 
+		// First validate that this organization is allowed to use the extension
+		const isAuthorized = await validateOrganization();
+		if (!isAuthorized) {
+			console.warn(
+				"Content script: Organization not authorized - extension functionality disabled"
+			);
+			return;
+		}
+
 		// Check if we're on the pipeline configuration page
 		const pipelineContainer = document.querySelector("#pp-main-div");
 		if (pipelineContainer) {
@@ -124,31 +83,27 @@ async function loadPipelineConfiguration() {
 		);
 		const configLoaded = await loadStageButtonsFromConfig();
 
-		// If no stage buttons loaded from config, use fallback
+		// If no stage buttons loaded from config, show message
 		if (!configLoaded || stageButtons.length === 0) {
-			console.log(
-				"Content script: No pipeline config found or failed to load, using comprehensive fallback pipeline configuration"
+			console.warn(
+				"Content script: Failed to load pipeline configuration from remote config - extension functionality limited"
 			);
-			stageButtons = [...fallbackStageButtons];
-			console.log(
-				`Content script: Using ${stageButtons.length} fallback stage buttons`
-			);
+			// Don't load any fallback stages - just disable functionality
+			stageButtons = [];
 		} else {
 			console.log(
 				`Content script: Successfully loaded ${stageButtons.length} stage buttons from config`
 			);
 		}
-
-		// Optional: Try to fetch pipeline configuration in the background (non-blocking)
-		// This can be enabled later when authentication issues are resolved
-		// fetchPipelineConfiguration();
 	} catch (error) {
 		console.error(
 			"Content script: Error loading pipeline configuration:",
 			error
 		);
-		console.log("Content script: Falling back to hardcoded configuration");
-		stageButtons = [...fallbackStageButtons];
+		console.warn(
+			"Content script: Extension functionality disabled due to configuration error"
+		);
+		stageButtons = [];
 	}
 }
 
@@ -226,8 +181,8 @@ function populateStageButtonsFromPipeline(pipelineContainer) {
 			"status options from pipeline configuration"
 		);
 	} else {
-		console.log("No statuses found in pipeline, using fallback configuration");
-		stageButtons = [...fallbackStageButtons];
+		console.log("No statuses found in pipeline, configuration required");
+		stageButtons = [];
 	}
 }
 
@@ -323,7 +278,8 @@ async function fetchPipelineConfiguration() {
 		await fetchPipelineConfigurationViaIframe(url);
 	} catch (error) {
 		console.error("Error fetching pipeline configuration:", error);
-		stageButtons = [...fallbackStageButtons];
+		console.warn("Extension functionality disabled due to fetch error");
+		stageButtons = [];
 	}
 }
 
@@ -370,12 +326,15 @@ async function fetchPipelineConfigurationViaIframe(url) {
 						);
 						populateStageButtonsFromPipeline(pipelineContainer);
 					} else {
-						console.log("Pipeline data not found in iframe, using fallback");
-						stageButtons = [...fallbackStageButtons];
+						console.log(
+							"Pipeline data not found in iframe, configuration required"
+						);
+						stageButtons = [];
 					}
 				} catch (error) {
 					console.error("Error accessing iframe content:", error);
-					stageButtons = [...fallbackStageButtons];
+					console.warn("Extension functionality disabled due to iframe error");
+					stageButtons = [];
 				}
 
 				// Clean up
@@ -393,7 +352,10 @@ async function fetchPipelineConfigurationViaIframe(url) {
 			if (!resolved) {
 				resolved = true;
 				clearTimeout(timeoutId);
-				stageButtons = [...fallbackStageButtons];
+				console.warn(
+					"Extension functionality disabled due to iframe load error"
+				);
+				stageButtons = [];
 				document.body.removeChild(iframe);
 				resolve();
 			}
@@ -403,8 +365,8 @@ async function fetchPipelineConfigurationViaIframe(url) {
 		timeoutId = setTimeout(() => {
 			if (!resolved) {
 				resolved = true;
-				console.log("Iframe timeout, using fallback configuration");
-				stageButtons = [...fallbackStageButtons];
+				console.log("Iframe timeout, configuration required");
+				stageButtons = [];
 				document.body.removeChild(iframe);
 				resolve();
 			}

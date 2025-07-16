@@ -1,6 +1,7 @@
 {
 	"version": "1.0.0",
 	"last_updated": "2025-07-16T10:00:00Z",
+	"allowed_organizations": ["org801559407"],
 	"zoho_config": {
 		"base_urls": [
 			"https://recruit.zoho.com",
