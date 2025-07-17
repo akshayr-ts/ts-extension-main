@@ -1,5 +1,5 @@
 {
-	"version": "1.0.0",
+	"version": "1.0.1",
 	"last_updated": "2025-07-16T10:00:00Z",
 	"allowed_organizations": ["org801559407"],
 	"zoho_config": {
@@ -128,11 +128,11 @@
 			"badgeClass": "red"
 		},
 		{
-			"label": "Archived Testing",
-			"short": "ARC",
-			"value": "Archived",
-			"background": "#6b7280",
-			"badgeClass": "cadet"
+		    "label": "Archived Testing",
+		    "short": "ARC",
+		    "value": "Archived Testing", 
+		    "background": "#6b7280",
+		    "badgeClass": "cadet"
 		}
 	],
 	"auto_applications": {
