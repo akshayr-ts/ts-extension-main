@@ -128,9 +128,9 @@
 			"badgeClass": "red"
 		},
 		{
-		    "label": "Archived Testing Wilf",
+		    "label": "Archived",
 		    "short": "ARC",
-		    "value": "Archived Testing Wilf", 
+		    "value": "Archived", 
 		    "background": "#6b7280",
 		    "badgeClass": "cadet"
 		}
